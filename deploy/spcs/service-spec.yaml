@@ -1,0 +1,54 @@
+# Snowflake Container Services service specification.
+# Referenced by `CREATE SERVICE ... FROM SPECIFICATION` in setup.sql.
+spec:
+  containers:
+    - name: bi-portal
+      image: /bi_portal_db/public/bi_portal_repo/bi-portal:1.0.0
+      env:
+        ENVIRONMENT: production
+        AUTH_MODE: okta
+        BASE_URL: "https://<account>-<service>.snowflakecomputing.app"
+        OKTA_SCOPES: "openid profile email groups"
+        OKTA_GROUPS_CLAIM: groups
+        CLAUDE_MODEL: claude-3-5-sonnet-latest
+        SEED_ON_STARTUP: "false"
+        # SPCS injects the running service's OAuth/Snowflake token; we read the
+        # warehouse using the service role (granted in setup.sql) so no
+        # SNOWFLAKE_PASSWORD is needed inside the container.
+        SNOWFLAKE_SCHEMA: ANALYTICS
+      secrets:
+        # Mapped from Snowflake SECRET objects (see setup.sql) into env vars.
+        - snowflakeSecret: bi_portal_db.public.session_secret
+          envVarName: SESSION_SECRET
+          secretKeyRef: secret_string
+        - snowflakeSecret: bi_portal_db.public.okta_client_id
+          envVarName: OKTA_CLIENT_ID
+          secretKeyRef: secret_string
+        - snowflakeSecret: bi_portal_db.public.okta_client_secret
+          envVarName: OKTA_CLIENT_SECRET
+          secretKeyRef: secret_string
+        - snowflakeSecret: bi_portal_db.public.okta_issuer
+          envVarName: OKTA_ISSUER
+          secretKeyRef: secret_string
+        - snowflakeSecret: bi_portal_db.public.anthropic_api_key
+          envVarName: ANTHROPIC_API_KEY
+          secretKeyRef: secret_string
+        - snowflakeSecret: bi_portal_db.public.database_url
+          envVarName: DATABASE_URL
+          secretKeyRef: secret_string
+      readinessProbe:
+        port: 8000
+        path: /api/health
+      resources:
+        requests:
+          cpu: 0.5
+          memory: 512Mi
+        limits:
+          cpu: 1
+          memory: 1Gi
+  endpoints:
+    - name: web
+      port: 8000
+      public: true
+  networkPolicyConfig:
+    allowInternetEgress: true # required to reach Okta + the Anthropic API

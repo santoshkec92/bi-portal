@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bi-portal
+  namespace: bi-portal
+  labels:
+    app.kubernetes.io/name: bi-portal
+spec:
+  replicas: 2 # stateless (signed-cookie sessions) -> scales horizontally
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: bi-portal
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: bi-portal
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+      containers:
+        - name: portal
+          image: ghcr.io/acme/bi-portal:1.0.0 # push your built image here
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: bi-portal-config
+            - secretRef:
+                name: bi-portal-secrets
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}

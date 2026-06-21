@@ -1,0 +1,41 @@
+# Local one-command run: docker compose -f deploy/docker/docker-compose.yml up --build
+# Uses Postgres to mirror production; omit the db service to fall back to SQLite.
+services:
+  portal:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile
+    image: bi-portal:local
+    ports:
+      - "8000:8000"
+    environment:
+      ENVIRONMENT: development
+      BASE_URL: http://localhost:8000
+      SESSION_SECRET: ${SESSION_SECRET:-dev-only-insecure-change-me}
+      AUTH_MODE: ${AUTH_MODE:-mock}
+      DATABASE_URL: postgresql+psycopg2://bi:bi@db:5432/bi_portal
+      # Optional integrations — left blank => synthetic data + mock insights.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OKTA_ISSUER: ${OKTA_ISSUER:-}
+      OKTA_CLIENT_ID: ${OKTA_CLIENT_ID:-}
+      OKTA_CLIENT_SECRET: ${OKTA_CLIENT_SECRET:-}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: bi
+      POSTGRES_PASSWORD: bi
+      POSTGRES_DB: bi_portal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bi"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

@@ -1,0 +1,20 @@
+# Non-secret configuration. Secrets (Okta secret, Claude key, DB password) live
+# in the Secret object, never here.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bi-portal-config
+  namespace: bi-portal
+data:
+  ENVIRONMENT: "production"
+  BASE_URL: "https://bi-portal.example.com"
+  CORS_ORIGINS: "https://bi-portal.example.com"
+  AUTH_MODE: "okta"
+  OKTA_ISSUER: "https://your-tenant.okta.com/oauth2/default"
+  OKTA_SCOPES: "openid profile email groups"
+  OKTA_GROUPS_CLAIM: "groups"
+  CLAUDE_MODEL: "claude-3-5-sonnet-latest"
+  CLAUDE_MAX_TOKENS: "1024"
+  SNOWFLAKE_SCHEMA: "ANALYTICS"
+  SNOWFLAKE_ROLE: "BI_PORTAL_READER"
+  SEED_ON_STARTUP: "false"

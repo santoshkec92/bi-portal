@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: bi-portal
+  namespace: bi-portal
+  annotations:
+    # TLS via cert-manager; the Okta redirect URI must be https and match BASE_URL.
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - bi-portal.example.com
+      secretName: bi-portal-tls
+  rules:
+    - host: bi-portal.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: bi-portal
+                port:
+                  number: 80
