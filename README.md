@@ -160,50 +160,136 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full diagrams and data 
 
 ---
 
-## Run it locally
+## Running the app
 
-You don't need any accounts or API keys — it runs in demo mode out of the box.
+> No accounts, API keys, or external services needed.
+> Everything runs locally in demo mode out of the box.
 
-### Option A — Docker (recommended, one command)
+---
 
-The simplest way — builds and wires everything automatically:
+### Option A — Docker (recommended)
 
+**Requires:** [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running.
+
+**Step 1** — Clone the repo and enter the folder:
+```bash
+git clone https://github.com/santoshkec92/bi-portal.git
+cd bi-portal
+```
+
+**Step 2** — Start the app (one command builds and runs everything):
 ```bash
 docker compose -f deploy/docker/docker-compose.yml up --build
 ```
 
-Then open **http://localhost:8000** — the login screen will appear with the demo users listed.
+This takes 2–3 minutes the first time (downloading dependencies). You'll see logs scrolling.
+Wait until you see a line like:
+```
+portal_1  | INFO:     Application startup complete.
+```
 
-### Option B — run the two pieces directly (for development)
+**Step 3** — Open your browser and go to:
+```
+http://localhost:8000
+```
 
-Requires **Python 3.11+** and **Node 20+**.
+You'll see the **Sign in** screen with seven demo users. Click any name to log in — no password needed.
 
-> **Important:** both terminals must be running at the same time.
-> The backend must be on port 8000 before you open the frontend.
+**To stop:** press `Ctrl+C` in the terminal, then run `docker compose -f deploy/docker/docker-compose.yml down`.
 
+---
+
+### Option B — Without Docker (two terminals)
+
+**Requires:**
+- Python 3.11 or newer — check with `python3 --version`
+- Node 20 or newer — check with `node --version`
+
+**Step 1** — Clone the repo:
 ```bash
-# Terminal 1 — backend API (start this first)
+git clone https://github.com/santoshkec92/bi-portal.git
+cd bi-portal
+```
+
+**Step 2** — Open **Terminal 1** and start the backend:
+```bash
 cd backend
-python3 -m venv .venv && . .venv/bin/activate
+python3 -m venv .venv
+. .venv/bin/activate          # on Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
-# Wait for: "Application startup complete."
 ```
 
+Wait until you see:
+```
+INFO:     Application startup complete.
+```
+**Keep this terminal open and running.**
+
+**Step 3** — Open a **second terminal** (keep Terminal 1 running) and start the frontend:
 ```bash
-# Terminal 2 — frontend (start after backend is up)
-cd frontend
+cd bi-portal/frontend         # from the repo root
 npm install
 npm run dev
-# Then open http://localhost:5173
 ```
 
-On first start, the app creates the database and fills it with sample folders,
-users, and dashboards automatically. You should see the **Sign in** screen with
-seven demo user buttons — click any to log in.
+Wait until you see:
+```
+VITE ready in ...ms
+➜  Local:   http://localhost:5173/
+```
 
-**If the Sign in screen is blank** (no user buttons): the backend is not running.
-Check Terminal 1 is up and showing "Application startup complete."
+**Step 4** — Open your browser and go to:
+```
+http://localhost:5173
+```
+
+You'll see the **Sign in** screen with seven demo users. Click any name to log in.
+
+---
+
+### Logging in
+
+No passwords — just click a name on the Sign in screen:
+
+| Click this user | To see |
+|---|---|
+| **Fiona** | Finance dashboards + the Approvals queue |
+| **Frank** | Finance dashboards only (no approval rights) |
+| **Sam** | Sales Ops dashboards + Approvals |
+| **Rita** | RevOps dashboards |
+| **Casey** | Customer Success dashboards |
+| **Ada** | Everything (platform admin) |
+| **Nina** | Shared dashboards only (no domain access) |
+
+**To try the security model:** log in as Frank, then try opening a Sales Ops dashboard
+by direct URL — you'll get a "not found" page. The data is genuinely blocked server-side,
+not just hidden in the UI.
+
+---
+
+### Troubleshooting
+
+**Sign in screen is blank (no user buttons showing)**
+→ The backend is not running. Check Terminal 1 — it must show "Application startup complete."
+Make sure you started the backend before opening the browser.
+
+**`npm run dev` errors or frontend won't start**
+→ Make sure `npm install` ran first and completed without errors.
+
+**`pip install` fails**
+→ Check your Python version: `python3 --version`. Needs 3.11 or newer.
+On a Mac with the default system Python (3.9), use `python3.11` or `python3.13` explicitly.
+
+**Port already in use**
+→ Something else is on port 8000 or 5173. Stop it, or kill it:
+```bash
+lsof -ti:8000 | xargs kill   # free port 8000
+lsof -ti:5173 | xargs kill   # free port 5173
+```
+
+**After stopping and restarting, data is reset**
+→ Normal for Option B (SQLite reseeds on startup). Use Docker for a persistent database.
 
 ---
 
