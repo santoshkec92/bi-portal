@@ -18,8 +18,12 @@ export default function Login() {
 
   async function loginMock(key: string) {
     setBusy(key);
-    await Api.mockLogin(key);
-    await refresh();
+    try {
+      await Api.mockLogin(key);
+      await refresh();
+    } finally {
+      setBusy(null);
+    }
   }
 
   return (

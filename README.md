@@ -164,32 +164,46 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full diagrams and data 
 
 You don't need any accounts or API keys — it runs in demo mode out of the box.
 
-### Option A — Docker (one command)
+### Option A — Docker (recommended, one command)
+
+The simplest way — builds and wires everything automatically:
 
 ```bash
 docker compose -f deploy/docker/docker-compose.yml up --build
-# then open http://localhost:8000
 ```
+
+Then open **http://localhost:8000** — the login screen will appear with the demo users listed.
 
 ### Option B — run the two pieces directly (for development)
 
 Requires **Python 3.11+** and **Node 20+**.
 
+> **Important:** both terminals must be running at the same time.
+> The backend must be on port 8000 before you open the frontend.
+
 ```bash
-# Backend (terminal 1)
+# Terminal 1 — backend API (start this first)
 cd backend
 python3 -m venv .venv && . .venv/bin/activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
-
-# Frontend (terminal 2)
-cd frontend
-npm install
-npm run dev        # opens http://localhost:5173
+# Wait for: "Application startup complete."
 ```
 
-On first start, the app sets itself up automatically — it creates the database and
-fills it with the sample folders, users, and dashboards described above.
+```bash
+# Terminal 2 — frontend (start after backend is up)
+cd frontend
+npm install
+npm run dev
+# Then open http://localhost:5173
+```
+
+On first start, the app creates the database and fills it with sample folders,
+users, and dashboards automatically. You should see the **Sign in** screen with
+seven demo user buttons — click any to log in.
+
+**If the Sign in screen is blank** (no user buttons): the backend is not running.
+Check Terminal 1 is up and showing "Application startup complete."
 
 ---
 
