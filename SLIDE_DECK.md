@@ -118,17 +118,17 @@ VISUAL: 6 tiles, one per pillar.
 ```mermaid
 flowchart LR
   subgraph Browser
-    SPA[React SPA<br/>Recharts + Tailwind]
+    SPA[React SPA<br>Recharts + Tailwind]
   end
   subgraph Container["BI Portal container"]
     direction TB
     API[FastAPI]
-    AUTH[Auth: OAuth2+PKCE<br/>signed sessions]
-    RBAC[RBAC core<br/>Principal + authz]
+    AUTH[Auth: OAuth2+PKCE<br>signed sessions]
+    RBAC[RBAC core<br>Principal + authz]
     DASH[Dashboard service]
     SNOW[Snowflake service]
     CLAUDE[Claude service]
-    ORM[(SQLAlchemy<br/>governance DB)]
+    ORM[(SQLAlchemy<br>governance DB)]
     API --> AUTH --> RBAC
     API --> DASH --> SNOW
     DASH --> CLAUDE
@@ -251,7 +251,7 @@ stateDiagram-v2
   [*] --> DRAFT: create in Personal Workspace
   DRAFT --> IN_REVIEW: author submits (target domain)
   CHANGES_REQUESTED --> IN_REVIEW: author resubmits
-  IN_REVIEW --> PUBLISHED: approver approves → moved to Domain Workspace
+  IN_REVIEW --> PUBLISHED: approver approves, moves to Domain Workspace
   IN_REVIEW --> CHANGES_REQUESTED: approver requests changes
   PUBLISHED --> [*]
 ```
@@ -315,11 +315,42 @@ erDiagram
   USER ||--o{ REPORT : authors
   FOLDER ||--o{ REPORT : contains
   REPORT ||--o{ APPROVAL_REQUEST : has
-  USER { int id PK; string okta_sub UK; string email; string name }
-  FOLDER { int id PK; string slug UK; enum type "shared|domain|personal"; string domain; int owner_user_id FK }
-  REPORT { int id PK; enum dashboard_type; enum status; int folder_id FK; int owner_user_id FK; string target_domain; json config }
-  APPROVAL_REQUEST { int id PK; int report_id FK; string target_domain; enum decision; int reviewer_id }
-  AUDIT_EVENT { int id PK; string user_email; string action; bool allowed }
+
+  USER {
+    int id PK
+    string okta_sub UK
+    string email
+    string name
+  }
+  FOLDER {
+    int id PK
+    string slug UK
+    string type
+    string domain
+    int owner_user_id FK
+  }
+  REPORT {
+    int id PK
+    string dashboard_type
+    string status
+    int folder_id FK
+    int owner_user_id FK
+    string target_domain
+    json config
+  }
+  APPROVAL_REQUEST {
+    int id PK
+    int report_id FK
+    string target_domain
+    string decision
+    int reviewer_id
+  }
+  AUDIT_EVENT {
+    int id PK
+    string user_email
+    string action
+    bool allowed
+  }
 ```
 
 Key design: `target_domain` (intent, fixed at creation) is **separate** from `folder_id` (location, moves on publish). Publishing = an auditable folder move, not a status toggle.
@@ -369,8 +400,8 @@ flowchart TB
     ING[Ingress + TLS] --> SVC[Service]
     SVC --> P1[Pod: bi-portal]
     SVC --> P2[Pod: bi-portal]
-    CM[ConfigMap<br/>non-secret] -.envFrom.-> P1
-    SEC[Secret / External Secrets<br/>Okta, Claude, DB] -.envFrom.-> P1
+    CM[ConfigMap<br>non-secret] -.envFrom.-> P1
+    SEC[Secret / External Secrets<br>Okta, Claude, DB] -.envFrom.-> P1
   end
   P1 --> OKTA[(Okta)]
   P1 --> ANT[(Anthropic)]
